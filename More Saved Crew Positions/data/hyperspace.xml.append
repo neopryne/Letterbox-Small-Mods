@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<FTL>
+	<mod:findLike type="scripts">
+		<mod-append:script>data/mscp_scripts/crew_positions.lua</mod-append:script>
+	</mod:findLike>
+</FTL>
