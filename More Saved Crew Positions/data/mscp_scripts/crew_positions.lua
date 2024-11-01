@@ -1,50 +1,97 @@
 local vter = mods.multiverse.vter
+local lwl = mods.lightweight_lua
+local userdata_table = mods.multiverse.userdata_table
 
---todo metavars.  if I can do it without cluttering metavar space.
+--todo hash function for checking if crew list has changed?
 
 --static final vars
-local SHOW_RETURN_MESSAGE_TIME = 120
+local PERSIST_POSITIONS_TIME = 120
 local WHITE = Graphics.GL_Color(222 / 255, 222 / 255, 222 / 255, 1)
+local METAVAR_NAME_CREW_POS = "saved_crew_positions"
 --static vars
-local sSavedPositions1 = {}
-local sSavedPositions2 = {}
+local sSavedPositions1 = "mods.crew_positions.first"
+local sSavedPositions2 = "mods.crew_positions.second"
 local sShowReturnMessageTimer = 0
+local sCrewTimer = PERSIST_POSITIONS_TIME
+local sInitialized
 
---[[  this doesn't show and I don't know why
-local function showReturnMessage()
-    Graphics.CSurface.GL_SetColor(WHITE);
-    Graphics.freetype.easy_print(10, 30, 230, "Return to Stations!")
-    sShowReturnMessageTimer = sShowReturnMessageTimer - 1
-end
-
-script.on_render_event(Defines.RenderEvents.LAYER_FRONT, function() end, function()
-        if (sShowReturnMessageTimer > 0) then
-            showReturnMessage()
-        end
+script.on_init(function()
+        sInitialized = false
+        print("loaded")
     end)
-    --]]
 
---Returns all crew on your ship to their saved positions.
-local function returnToPositions(savedPositions)
-    sShowReturnMessageTimer = SHOW_RETURN_MESSAGE_TIME
+local function persistPositions()
     local shipManager = Hyperspace.ships(0)
-    for crewmem in vter(shipManager.vCrewList) do
-        if (crewmem.iShipId == 0) then
-            local slot = savedPositions[crewmem.extend.selfId].slotId
-            local room = savedPositions[crewmem.extend.selfId].roomId
-            crewmem:MoveToRoom(room, slot, false)
+    print("persist positions")
+    local i = 0
+    if (shipManager ~= nil) then
+        for k, crewmem in ipairs(lwl.getAllMemberCrew(shipManager)) do
+            local crewTable1 = userdata_table(crewmem, sSavedPositions1)
+            local crewTable2 = userdata_table(crewmem, sSavedPositions2)
+            lwl.setMetavar("1"..METAVAR_NAME_CREW_POS..i.."roomId", crewTable1.roomId)
+            lwl.setMetavar("1"..METAVAR_NAME_CREW_POS..i.."slotId", crewTable1.slotId)
+            lwl.setMetavar("2"..METAVAR_NAME_CREW_POS..i.."roomId", crewTable2.roomId)
+            lwl.setMetavar("2"..METAVAR_NAME_CREW_POS..i.."slotId", crewTable2.slotId)
+            i = i + 1
         end
     end
 end
 
---Saves the positions of your crew (if they're on your ship)
+script.on_internal_event(Defines.InternalEvents.SHIP_LOOP, function(shipManager)
+        if (not sInitialized and shipManager ~= nil) then
+            print("loading persisted crew positions")
+            if (shipManager.iShipId == 0) then
+                --if metavars exist, load and clear them.
+                local i = 0
+                for k, crewmem in ipairs(lwl.getAllMemberCrew(shipManager)) do
+                    room1 = Hyperspace.metaVariables["1"..METAVAR_NAME_CREW_POS..i.."roomId"]
+                    slot1 = Hyperspace.metaVariables["1"..METAVAR_NAME_CREW_POS..i.."slotId"]
+                    room2 = Hyperspace.metaVariables["2"..METAVAR_NAME_CREW_POS..i.."roomId"]
+                    slot2 = Hyperspace.metaVariables["2"..METAVAR_NAME_CREW_POS..i.."slotId"]
+                    print("loaded ", i, " ", room1, slot1, room2, slot2)
+                    local crewTable1 = userdata_table(crewmem, sSavedPositions1)
+                    local crewTable2 = userdata_table(crewmem, sSavedPositions2)
+                    crewTable1.roomId = room1
+                    crewTable1.slotId = slot1
+                    crewTable2.roomId = room2
+                    crewTable2.slotId = slot2
+                    i = i + 1
+                end
+                sInitialized = true
+            end
+        end
+        sCrewTimer = sCrewTimer - 1
+        if (sCrewTimer <= 0) then
+            sCrewTimer = PERSIST_POSITIONS_TIME
+            persistPositions()
+        end
+    end)
+
+--Saves the positions of your crew (if they're on your ship)  todo make it persist across closing the game.
 local function savePositions(savedPositions)
     local shipManager = Hyperspace.ships(0)
     for crewmem in vter(shipManager.vCrewList) do
         if (crewmem.iShipId == 0) then
+            local crewTable = userdata_table(crewmem, savedPositions)
             local saved_slot = crewmem.currentSlot
             if (saved_slot ~= nil) then
-                savedPositions[crewmem.extend.selfId] = {slotId=saved_slot.slotId, roomId=saved_slot.roomId}
+                crewTable.roomId = saved_slot.roomId
+                crewTable.slotId = saved_slot.slotId
+            end
+        end
+    end
+    print("Positions saved!")
+end
+
+--Returns all crew on your ship to their saved positions.
+local function returnToPositions(savedPositions)
+    print("Return to Stations!")
+    local shipManager = Hyperspace.ships(0)
+    for crewmem in vter(shipManager.vCrewList) do
+        if (crewmem.iShipId == 0) then
+            local crewTable = userdata_table(crewmem, savedPositions)
+            if (crewTable.roomId ~= nil) then
+                crewmem:MoveToRoom(crewTable.roomId, crewTable.slotId, false)
             end
         end
     end
