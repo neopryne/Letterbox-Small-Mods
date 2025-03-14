@@ -2,17 +2,14 @@ local vter = mods.multiverse.vter
 local lwl = mods.lightweight_lua
 local userdata_table = mods.multiverse.userdata_table
 
---todo hash function for checking if crew list has changed?
+--todo remove userdata, just use metavars.
 
 --static final vars
-local PERSIST_POSITIONS_TIME = 120
-local WHITE = Graphics.GL_Color(222 / 255, 222 / 255, 222 / 255, 1)
 local METAVAR_NAME_CREW_POS = "saved_crew_positions"
 --static vars
 local sSavedPositions1 = "mods.crew_positions.first"
 local sSavedPositions2 = "mods.crew_positions.second"
 local sShowReturnMessageTimer = 0
-local sCrewTimer = PERSIST_POSITIONS_TIME
 local sInitialized
 
 script.on_init(function()
@@ -21,16 +18,14 @@ script.on_init(function()
 
 local function persistPositions()
     local shipManager = Hyperspace.ships(0)
-    local i = 0
     if (shipManager ~= nil) then
         for k, crewmem in ipairs(lwl.getAllMemberCrew(shipManager)) do
             local crewTable1 = userdata_table(crewmem, sSavedPositions1)
             local crewTable2 = userdata_table(crewmem, sSavedPositions2)
-            lwl.setMetavar("1"..METAVAR_NAME_CREW_POS..i.."roomId", crewTable1.roomId)
-            lwl.setMetavar("1"..METAVAR_NAME_CREW_POS..i.."slotId", crewTable1.slotId)
-            lwl.setMetavar("2"..METAVAR_NAME_CREW_POS..i.."roomId", crewTable2.roomId)
-            lwl.setMetavar("2"..METAVAR_NAME_CREW_POS..i.."slotId", crewTable2.slotId)
-            i = i + 1
+            lwl.setMetavar("1"..METAVAR_NAME_CREW_POS..crewmem.extend.selfId.."roomId", crewTable1.roomId)
+            lwl.setMetavar("1"..METAVAR_NAME_CREW_POS..crewmem.extend.selfId.."slotId", crewTable1.slotId)
+            lwl.setMetavar("2"..METAVAR_NAME_CREW_POS..crewmem.extend.selfId.."roomId", crewTable2.roomId)
+            lwl.setMetavar("2"..METAVAR_NAME_CREW_POS..crewmem.extend.selfId.."slotId", crewTable2.slotId)
         end
     end
 end
@@ -40,12 +35,11 @@ script.on_internal_event(Defines.InternalEvents.SHIP_LOOP, function(shipManager)
             --print("loading persisted crew positions")
             if (shipManager.iShipId == 0) then
                 --if metavars exist, load and clear them.
-                local i = 0
                 for k, crewmem in ipairs(lwl.getAllMemberCrew(shipManager)) do
-                    room1 = Hyperspace.metaVariables["1"..METAVAR_NAME_CREW_POS..i.."roomId"]
-                    slot1 = Hyperspace.metaVariables["1"..METAVAR_NAME_CREW_POS..i.."slotId"]
-                    room2 = Hyperspace.metaVariables["2"..METAVAR_NAME_CREW_POS..i.."roomId"]
-                    slot2 = Hyperspace.metaVariables["2"..METAVAR_NAME_CREW_POS..i.."slotId"]
+                    room1 = Hyperspace.metaVariables["1"..METAVAR_NAME_CREW_POS..crewmem.extend.selfId.."roomId"]
+                    slot1 = Hyperspace.metaVariables["1"..METAVAR_NAME_CREW_POS..crewmem.extend.selfId.."slotId"]
+                    room2 = Hyperspace.metaVariables["2"..METAVAR_NAME_CREW_POS..crewmem.extend.selfId.."roomId"]
+                    slot2 = Hyperspace.metaVariables["2"..METAVAR_NAME_CREW_POS..crewmem.extend.selfId.."slotId"]
                     --print("loaded ", i, " ", room1, slot1, room2, slot2)
                     local crewTable1 = userdata_table(crewmem, sSavedPositions1)
                     local crewTable2 = userdata_table(crewmem, sSavedPositions2)
@@ -53,15 +47,9 @@ script.on_internal_event(Defines.InternalEvents.SHIP_LOOP, function(shipManager)
                     crewTable1.slotId = slot1
                     crewTable2.roomId = room2
                     crewTable2.slotId = slot2
-                    i = i + 1
                 end
                 sInitialized = true
             end
-        end
-        sCrewTimer = sCrewTimer - 1
-        if (sCrewTimer <= 0) then
-            sCrewTimer = PERSIST_POSITIONS_TIME
-            persistPositions()
         end
     end)
 
@@ -78,6 +66,7 @@ local function savePositions(savedPositions)
             end
         end
     end
+    persistPositions()
     print("Positions saved!")
 end
 
