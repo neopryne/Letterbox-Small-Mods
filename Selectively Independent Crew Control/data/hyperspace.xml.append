@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<FTL>
+	<mod:findLike type="scripts">
+		<mod-append:script>data/sicc_scripts/selective_crew_automation.lua</mod-append:script>
+	</mod:findLike>
+</FTL>
