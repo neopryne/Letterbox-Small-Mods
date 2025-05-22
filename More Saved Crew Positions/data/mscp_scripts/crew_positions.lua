@@ -19,7 +19,7 @@ script.on_init(function()
 local function persistPositions()
     local shipManager = Hyperspace.ships(0)
     if (shipManager ~= nil) then
-        for k, crewmem in ipairs(lwl.getAllMemberCrew(shipManager)) do
+        for k, crewmem in ipairs(lwl.getAllMemberCrewFromFactory(lwl.filterOwnshipTrueCrew)) do
             local crewTable1 = userdata_table(crewmem, sSavedPositions1)
             local crewTable2 = userdata_table(crewmem, sSavedPositions2)
             lwl.setMetavar("1"..METAVAR_NAME_CREW_POS..crewmem.extend.selfId.."roomId", crewTable1.roomId)
@@ -35,7 +35,7 @@ script.on_internal_event(Defines.InternalEvents.SHIP_LOOP, function(shipManager)
             --print("loading persisted crew positions")
             if (shipManager.iShipId == 0) then
                 --if metavars exist, load and clear them.
-                for k, crewmem in ipairs(lwl.getAllMemberCrew(shipManager)) do
+                for k, crewmem in ipairs(lwl.getAllMemberCrewFromFactory(lwl.filterOwnshipTrueCrew)) do
                     room1 = Hyperspace.metaVariables["1"..METAVAR_NAME_CREW_POS..crewmem.extend.selfId.."roomId"]
                     slot1 = Hyperspace.metaVariables["1"..METAVAR_NAME_CREW_POS..crewmem.extend.selfId.."slotId"]
                     room2 = Hyperspace.metaVariables["2"..METAVAR_NAME_CREW_POS..crewmem.extend.selfId.."roomId"]

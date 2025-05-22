@@ -1,7 +1,6 @@
 local vter = mods.multiverse.vter
 local lwl = mods.lightweight_lua
-local userdata_table = mods.multiverse.userdata_table
-local lwed = mods.lightweight_editor
+local lwk = mods.lightweight_keybinds
 
 --If large swaths of people don't notice how important something is until it's gone, we are probably doing a bad job of conveying why that thing is important.
 --Persistant list:
@@ -15,7 +14,6 @@ local REUP_PERIOD = 100 --ms.  Changing this number breaks things in unclear way
 local sAutomatedCrew = "mods.crew_automation"
 local sReUpTimer = 0
 local BOOST_ENABLED = -1 --inverse of zero is true, so -1.
-local sInitialized = false
 
 --todo lwl getSelectedCrew()
 --crewmem.extend.selfId does what I need
@@ -32,14 +30,9 @@ automationBoost.priority = 9998
 automationBoost.realBoostId = Hyperspace.StatBoostDefinition.statBoostDefs:size()
 Hyperspace.StatBoostDefinition.statBoostDefs:push_back(automationBoost) --init requirement
 
-script.on_init(function() --on run start
-        sInitialized = false
-    end)
-
 --I guess I could refresh the boosts every [TIMEPERIOD] as long as the selection state is on, but man, that's so much cludgier.
 --Saves the positions of your crew (if they're on your ship)  todo make it persist across closing the game.
 local function toggleAutomation(crewMembers)
-    local shipManager = Hyperspace.ships(0)
     for k, crewmem in ipairs(crewMembers) do
         local savedState = Hyperspace.metaVariables[METAVAR_NAME_CREW_POS..crewmem.extend.selfId.."automationState"]
         
@@ -57,13 +50,13 @@ local function toggleAutomation(crewMembers)
     return #crewMembers
 end
 
-local function applyStatBoosts(shipManager)
+local function applyStatBoosts(shipManager) --todo fix this when HS 1.20 arises.
     for k, crewmem in ipairs(lwl.getAllMemberCrew(shipManager)) do
         if (Hyperspace.metaVariables[METAVAR_NAME_CREW_POS..crewmem.extend.selfId.."automationState"] == BOOST_ENABLED) then
             local statBoostManager = Hyperspace.StatBoostManager.GetInstance()
-            print("applying stat boosts to ", crewmem:GetName())
+            --print("applying stat boosts to ", crewmem:GetName())
             local boost = Hyperspace.StatBoost(automationBoost)
-            print("boost created")
+            --print("boost created")
             statBoostManager:CreateTimedAugmentBoost(boost, crewmem)
         end
     end
@@ -83,9 +76,9 @@ script.on_internal_event(Defines.InternalEvents.SHIP_LOOP, function(shipManager)
     end)
 
 --todo update mscp with keybinds library and selfId version
-lwed.registerKeyFunctionCombo("KEY_t", {"CTRL"}, function(operatorKey)
-        local selected = toggleAutomation(lwl.getSelectedCrew(lwl.OWNSHIP(), lwl.SELECTED()))
+lwk.registerKeyFunctionCombo("KEY_i", {"CTRL"}, function(operatorKey)
+        local selected = toggleAutomation(lwl.getSelectedCrew(lwl.SELECTED()))
         if (selected == 0) then --Only try to apply to hovered ones if nothing is selected otherwise.
-            toggleAutomation(lwl.getSelectedCrew(lwl.OWNSHIP(), lwl.SELECTED_HOVER()))
+            toggleAutomation(lwl.getSelectedCrew(lwl.SELECTED_HOVER()))
         end
     end)

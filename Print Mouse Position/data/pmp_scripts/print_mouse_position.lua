@@ -1,10 +1,23 @@
+local lwl = mods.lightweight_lua
+local lwk = mods.lightweight_keybinds
 --[[
 Usage: Patch this mod.
 --]]
 
+lwk.metaPressed()
+
 script.on_render_event(Defines.RenderEvents.MOUSE_CONTROL, function() end, function()
         local mousePos = Hyperspace.Mouse.position
         local printString = "("..mousePos.x..", "..mousePos.y..")"
+        if lwl then --fail gracefully if lwl isn't installed.
+            if lwk.metaPressed() then
+                local ownshipPos = lwl.convertMousePositionToPlayerShipPosition(mousePos)
+                printString = "Player: ("..ownshipPos.x..", "..ownshipPos.y..")"
+            elseif lwk.shiftPressed() then
+                local enemyPos = lwl.convertMousePositionToEnemyShipPosition(mousePos)
+                printString = "Enemy: ("..enemyPos.x..", "..enemyPos.y..")"
+            end
+        end
         --todo maybe ensure color correctness, but I kind of like it.
         local xOffset
         local yOffset
