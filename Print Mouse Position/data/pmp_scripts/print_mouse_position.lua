@@ -3,8 +3,9 @@ local lwk = mods.lightweight_keybinds
 --[[
 Usage: Patch this mod.
 --]]
-
-lwk.metaPressed()
+if not lwk then
+    error("Lightweight Lua was not patched, or was patched after Print Mouse Position.  Some features will be disabled.")
+end
 
 script.on_render_event(Defines.RenderEvents.MOUSE_CONTROL, function() end, function()
         local mousePos = Hyperspace.Mouse.position

@@ -52,5 +52,5 @@ if exist "%RELATIVE_FILE%" (
     goto :EOF
 )
 
-powershell -NoProfile -Command "Set-Location C:\Users\GunBuild-1\Documents\Workspace\ftlman-x86_64-pc-windows-gnu\ftlman; .\ftlman.exe patch 'Multiverse 5.4.5 - Assets (Patch above Data).zip' 'Multiverse 5.4.6 - Data.zip' Vertex-Util.ftl 'Lightweight Lua.zip' %RELATIVE_FILE%"
+powershell -NoProfile -Command "Set-Location C:\Users\GunBuild-1\Documents\Workspace\ftlman-x86_64-pc-windows-gnu\ftlman; .\ftlman.exe patch 'Multiverse 5.5 - Assets (Patch above Data).zip' 'Multiverse 5.5 - Data.zip' Vertex-Util.ftl 'Lightweight Lua.zip' %RELATIVE_FILE%"
 powershell -command "& 'C:\Program Files (x86)\Steam\steamapps\common\FTL Faster Than Light\FTLGame.exe'"
