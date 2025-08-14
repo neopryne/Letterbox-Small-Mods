@@ -65,10 +65,12 @@ local function toggleAutomation(crewMembers)
 end
 
 
-lwk.registerKeyFunctionCombo("KEY_i", {"CTRL"}, function(operatorKey)
-        local selectedCrew = lwl.getSelectedCrew(lwl.SELECTED())
-        if (#selectedCrew == 0) then --Only try to apply to hovered ones if nothing is selected otherwise.
-            selectedCrew = lwl.getSelectedCrew(lwl.SELECTED_HOVER())
-        end
-        toggleAutomation(selectedCrew)
-    end)
+local function toggleAutomationCallback(operatorKey)
+    local selectedCrew = lwl.getSelectedCrew(lwl.SELECTED())
+    if (#selectedCrew == 0) then --Only try to apply to hovered ones if nothing is selected otherwise.
+        selectedCrew = lwl.getSelectedCrew(lwl.SELECTED_HOVER())
+    end
+    toggleAutomation(selectedCrew)
+end
+
+lwk.registerKeyFunctionCombo(Defines.SDL_KEY_i, {lwk.CTRL}, toggleAutomationCallback)
