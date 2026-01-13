@@ -1,3 +1,5 @@
+![Github All Releases](https://img.shields.io/github/downloads/neopryne/Letterbox-Small-Mods/total?color=0078D4&style=for-the-badge) ![GitHub Release](https://img.shields.io/github/v/release/neopryne/Letterbox-Small-Mods?color=05227A&style=for-the-badge) [![GitHub stars](https://img.shields.io/github/stars/neopryne/Letterbox-Small-Mods?color=F4870A&style=for-the-badge)](https://github.com/neopryne/Letterbox-Small-Mods/stargazers) [![GitHub issues](https://img.shields.io/github/issues/neopryne/Letterbox-Small-Mods?color=FF0000&style=for-the-badge)](https://github.com/neopryne/Letterbox-Small-Mods/issues) [![GitHub forks](https://img.shields.io/github/forks/neopryne/Letterbox-Small-Mods?color=00AF00&style=for-the-badge)](https://github.com/neopryne/Letterbox-Small-Mods/network) [![License: IDK](https://img.shields.io/badge/License-MIT?style=for-the-badge)](https://github.com/neopryne/Letterbox-Small-Mods/blob/main/License.md)
+
 # Letterbox Small Mods
 
 Check the readmes in the individual mod folders.
