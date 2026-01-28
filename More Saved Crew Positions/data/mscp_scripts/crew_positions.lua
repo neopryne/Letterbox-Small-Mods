@@ -2,13 +2,14 @@ local vter = mods.multiverse.vter
 local lwl = mods.lightweight_lua
 local userdata_table = mods.multiverse.userdata_table
 
+mods.more_crew_positions = {}
+local mscp = mods.more_crew_positions
 --todo remove userdata, just use metavars.
 
 --static final vars
 local METAVAR_NAME_CREW_POS = "saved_crew_positions"
 --static vars
-local sSavedPositions1 = "mods.crew_positions.first"
-local sSavedPositions2 = "mods.crew_positions.second"
+local sSavedPositionsKeys = {"mods.crew_positions.first", "mods.crew_positions.second"}
 local sShowReturnMessageTimer = 0
 local sInitialized
 
@@ -16,16 +17,34 @@ script.on_init(function()
         sInitialized = false
     end)
 
+function mscp.moveToSavedPosition(crewmem, number)
+    local crewTable = userdata_table(crewmem, sSavedPositionsKeys[number])
+    if (crewTable.roomId ~= nil) then
+        crewmem:MoveToRoom(crewTable.roomId, crewTable.slotId, false)
+        return true
+    end
+    return false
+end
+
+local function loadPosition(crewmem, index)
+    --print("loaded ", i, " ", room1, slot1, room2, slot2)
+    local crewTable = userdata_table(crewmem, sSavedPositionsKeys[index])
+    crewTable.roomId = Hyperspace.metaVariables[index..METAVAR_NAME_CREW_POS..crewmem.extend.selfId.."roomId"]
+    crewTable.slotId = Hyperspace.metaVariables[index..METAVAR_NAME_CREW_POS..crewmem.extend.selfId.."slotId"]
+end
+
+local function persistPosition(crewmem, index)
+    local crewTable1 = userdata_table(crewmem, sSavedPositionsKeys[index])
+    lwl.setMetavar(index..METAVAR_NAME_CREW_POS..crewmem.extend.selfId.."roomId", crewTable1.roomId)
+    lwl.setMetavar(index..METAVAR_NAME_CREW_POS..crewmem.extend.selfId.."slotId", crewTable1.slotId)
+end
+
 local function persistPositions()
     local shipManager = Hyperspace.ships(0)
     if (shipManager ~= nil) then
         for k, crewmem in ipairs(lwl.getAllMemberCrewFromFactory(lwl.filterOwnshipTrueCrew)) do
-            local crewTable1 = userdata_table(crewmem, sSavedPositions1)
-            local crewTable2 = userdata_table(crewmem, sSavedPositions2)
-            lwl.setMetavar("1"..METAVAR_NAME_CREW_POS..crewmem.extend.selfId.."roomId", crewTable1.roomId)
-            lwl.setMetavar("1"..METAVAR_NAME_CREW_POS..crewmem.extend.selfId.."slotId", crewTable1.slotId)
-            lwl.setMetavar("2"..METAVAR_NAME_CREW_POS..crewmem.extend.selfId.."roomId", crewTable2.roomId)
-            lwl.setMetavar("2"..METAVAR_NAME_CREW_POS..crewmem.extend.selfId.."slotId", crewTable2.slotId)
+            persistPosition(crewmem, 1)
+            persistPosition(crewmem, 2)
         end
     end
 end
@@ -36,17 +55,8 @@ script.on_internal_event(Defines.InternalEvents.SHIP_LOOP, function(shipManager)
             if (shipManager.iShipId == 0) then
                 --if metavars exist, load and clear them.
                 for k, crewmem in ipairs(lwl.getAllMemberCrewFromFactory(lwl.filterOwnshipTrueCrew)) do
-                    room1 = Hyperspace.metaVariables["1"..METAVAR_NAME_CREW_POS..crewmem.extend.selfId.."roomId"]
-                    slot1 = Hyperspace.metaVariables["1"..METAVAR_NAME_CREW_POS..crewmem.extend.selfId.."slotId"]
-                    room2 = Hyperspace.metaVariables["2"..METAVAR_NAME_CREW_POS..crewmem.extend.selfId.."roomId"]
-                    slot2 = Hyperspace.metaVariables["2"..METAVAR_NAME_CREW_POS..crewmem.extend.selfId.."slotId"]
-                    --print("loaded ", i, " ", room1, slot1, room2, slot2)
-                    local crewTable1 = userdata_table(crewmem, sSavedPositions1)
-                    local crewTable2 = userdata_table(crewmem, sSavedPositions2)
-                    crewTable1.roomId = room1
-                    crewTable1.slotId = slot1
-                    crewTable2.roomId = room2
-                    crewTable2.slotId = slot2
+                    loadPosition(crewmem, 1)
+                    loadPosition(crewmem, 2)
                 end
                 sInitialized = true
             end
@@ -70,6 +80,8 @@ local function savePositions(savedPositions)
     print("Positions saved!")
 end
 
+
+
 --Returns all crew on your ship to their saved positions.
 local function returnToPositions(savedPositions)
     print("Return to Stations!")
@@ -86,12 +98,12 @@ end
 
 script.on_internal_event(Defines.InternalEvents.ON_KEY_DOWN, function(key)
         if (key == Defines.SDL.KEY_PERIOD) then
-            savePositions(sSavedPositions1)
+            savePositions(sSavedPositionsKeys[1])
         elseif (key == Defines.SDL.KEY_COMMA) then
-            savePositions(sSavedPositions2)
+            savePositions(sSavedPositionsKeys[2])
         elseif (key == Defines.SDL.KEY_QUOTE) then
-            returnToPositions(sSavedPositions1)
+            returnToPositions(sSavedPositionsKeys[1])
         elseif (key == Defines.SDL.KEY_SEMICOLON) then
-            returnToPositions(sSavedPositions2)
+            returnToPositions(sSavedPositionsKeys[2])
         end
     end)
