@@ -10,6 +10,8 @@ local mscp = mods.more_crew_positions
 local METAVAR_NAME_CREW_POS = "saved_crew_positions"
 --static vars
 local sSavedPositionsKeys = {"mods.crew_positions.first", "mods.crew_positions.second"}
+local sReturnMessages = {"Return to Secondary Stations!", "Return to Tertiary Stations!"}
+local sSaveMessages = {"Secondary Stations saved.", "Tertiary Stations saved."}
 local sShowReturnMessageTimer = 0
 local sInitialized
 
@@ -33,18 +35,17 @@ local function loadPosition(crewmem, index)
     crewTable.slotId = Hyperspace.metaVariables[index..METAVAR_NAME_CREW_POS..crewmem.extend.selfId.."slotId"]
 end
 
-local function persistPosition(crewmem, index)
+local function persistSavedPosition(crewmem, index)
     local crewTable1 = userdata_table(crewmem, sSavedPositionsKeys[index])
     lwl.setMetavar(index..METAVAR_NAME_CREW_POS..crewmem.extend.selfId.."roomId", crewTable1.roomId)
     lwl.setMetavar(index..METAVAR_NAME_CREW_POS..crewmem.extend.selfId.."slotId", crewTable1.slotId)
 end
 
-local function persistPositions()
+local function persistPositions(index)
     local shipManager = Hyperspace.ships(0)
     if (shipManager ~= nil) then
         for k, crewmem in ipairs(lwl.getAllMemberCrewFromFactory(lwl.filterOwnshipTrueCrew)) do
-            persistPosition(crewmem, 1)
-            persistPosition(crewmem, 2)
+            persistSavedPosition(crewmem, index)
         end
     end
 end
@@ -64,7 +65,8 @@ script.on_internal_event(Defines.InternalEvents.SHIP_LOOP, function(shipManager)
     end)
 
 --Saves the positions of your crew (if they're on your ship)  todo make it persist across closing the game.
-local function savePositions(savedPositions)
+local function savePositions(index)
+    local savedPositions = sSavedPositionsKeys[index]
     local shipManager = Hyperspace.ships(0)
     for crewmem in vter(shipManager.vCrewList) do
         if (crewmem.iShipId == 0) then
@@ -76,34 +78,30 @@ local function savePositions(savedPositions)
             end
         end
     end
-    persistPositions()
-    print("Positions saved!")
+    persistPositions(index)
+    print(sSaveMessages[index])
 end
 
-
-
 --Returns all crew on your ship to their saved positions.
-local function returnToPositions(savedPositions)
-    print("Return to Stations!")
+--todo test and push an update for this, this bug is bad.
+local function returnToPositions(index)
     local shipManager = Hyperspace.ships(0)
     for crewmem in vter(shipManager.vCrewList) do
         if (crewmem.iShipId == 0) then
-            local crewTable = userdata_table(crewmem, savedPositions)
-            if (crewTable.roomId ~= nil) then
-                crewmem:MoveToRoom(crewTable.roomId, crewTable.slotId, false)
-            end
+            mscp.moveToSavedPosition(crewmem, index)
         end
     end
+    print(sReturnMessages[index])
 end
 
 script.on_internal_event(Defines.InternalEvents.ON_KEY_DOWN, function(key)
         if (key == Defines.SDL.KEY_PERIOD) then
-            savePositions(sSavedPositionsKeys[1])
+            savePositions(1)
         elseif (key == Defines.SDL.KEY_COMMA) then
-            savePositions(sSavedPositionsKeys[2])
+            savePositions(2)
         elseif (key == Defines.SDL.KEY_QUOTE) then
-            returnToPositions(sSavedPositionsKeys[1])
+            returnToPositions(1)
         elseif (key == Defines.SDL.KEY_SEMICOLON) then
-            returnToPositions(sSavedPositionsKeys[2])
+            returnToPositions(2)
         end
     end)
